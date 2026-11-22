@@ -56,7 +56,17 @@ export async function register(input: RegisterInput) {
     user.guideProfile = guide._id;
     await user.save();
   }
-  await issueOtp(user);
+  // await issueOtp(user);
+  // return { email: user.email };
+    try {
+    await issueOtp(user);
+    } catch (e) {
+    // Email na jaye to adhoora (unverifiable) account mat chhodo
+    await Guide.deleteOne({ user: user._id });
+    await User.deleteOne({ _id: user._id });
+    console.error("[auth] verification email failed:", (e as Error).message);
+    throw new AppError(503, "We couldn't send the verification email. Please try again in a moment.", "EMAIL_FAILED");
+  }
   return { email: user.email };
 }
 
